@@ -1,0 +1,298 @@
+# AI-Based Network Attack Detection System - Configuration File
+
+project:
+  name: "AI Network Attack Detection"
+  version: "1.0.0"
+  description: "Advanced ML-based network intrusion detection system"
+
+# Data Configuration
+data:
+  datasets:
+    - name: "CICIDS2017"
+      path: "E:/ISS course/Ps/1. a git/2/network_attack_detection/data/raw/cicids2017"
+      enabled: true
+    - name: "UNSW-NB15"
+      path: "E:/ISS course/Ps/1. a git/2/network_attack_detection/data/raw/unsw_nb15"
+      enabled: false
+
+  
+  processed_path: "data/processed"
+  train_test_split: 0.8
+  validation_split: 0.1
+  random_state: 42
+  
+  # Attack categories mapping
+  attack_types:
+    normal: 0
+    ddos: 1
+    dos: 2
+    brute_force: 3
+    port_scan: 4
+    botnet: 5
+    infiltration: 6
+    web_attack: 7
+    exploit: 8
+    backdoor: 9
+
+# Feature Engineering
+features:
+  # Network flow features
+  flow_features:
+    - "flow_duration"
+    - "total_fwd_packets"
+    - "total_bwd_packets"
+    - "total_length_fwd_packets"
+    - "total_length_bwd_packets"
+    - "fwd_packet_length_max"
+    - "fwd_packet_length_min"
+    - "fwd_packet_length_mean"
+    - "fwd_packet_length_std"
+    - "bwd_packet_length_max"
+    - "bwd_packet_length_min"
+    - "bwd_packet_length_mean"
+    - "bwd_packet_length_std"
+    - "flow_bytes_per_sec"
+    - "flow_packets_per_sec"
+  
+  # Statistical features
+  statistical_features:
+    - "fwd_iat_total"
+    - "fwd_iat_mean"
+    - "fwd_iat_std"
+    - "fwd_iat_max"
+    - "fwd_iat_min"
+    - "bwd_iat_total"
+    - "bwd_iat_mean"
+    - "bwd_iat_std"
+    - "bwd_iat_max"
+    - "bwd_iat_min"
+  
+  # TCP flags and header features
+  protocol_features:
+    - "fwd_psh_flags"
+    - "bwd_psh_flags"
+    - "fwd_urg_flags"
+    - "bwd_urg_flags"
+    - "fin_flag_count"
+    - "syn_flag_count"
+    - "rst_flag_count"
+    - "psh_flag_count"
+    - "ack_flag_count"
+    - "urg_flag_count"
+  
+  # Advanced features
+  advanced_features:
+    - "active_mean"
+    - "active_std"
+    - "active_max"
+    - "active_min"
+    - "idle_mean"
+    - "idle_std"
+    - "idle_max"
+    - "idle_min"
+  
+  # Feature selection
+  selection:
+    method: "mutual_info"  # Options: mutual_info, f_classif, chi2, rfe
+    n_features: 50
+    correlation_threshold: 0.95
+
+# Preprocessing
+preprocessing:
+  handle_missing: "drop"  # Options: drop, mean, median, mode
+  outlier_detection: true
+  outlier_method: "isolation_forest"  # Options: isolation_forest, local_outlier_factor
+  outlier_contamination: 0.1
+  
+  # Normalization
+  scaling:
+    method: "standard"  # Options: standard, minmax, robust
+    apply_to_features: true
+  
+  # Encoding
+  encoding:
+    categorical_method: "label"  # Options: label, onehot
+    
+  # Balancing
+  balance_classes: true
+  balancing_method: "smote"  # Options: smote, adasyn, random_oversample, random_undersample
+
+# Model Configuration
+models:
+  # Random Forest
+  random_forest:
+    enabled: true
+    params:
+      n_estimators: 200
+      max_depth: 30
+      min_samples_split: 5
+      min_samples_leaf: 2
+      max_features: "sqrt"
+      bootstrap: true
+      random_state: 42
+      n_jobs: -1
+      class_weight: "balanced"
+  
+  # Gradient Boosting (XGBoost)
+  xgboost:
+    enabled: true
+    params:
+      n_estimators: 200
+      max_depth: 10
+      learning_rate: 0.1
+      subsample: 0.8
+      colsample_bytree: 0.8
+      gamma: 0
+      min_child_weight: 1
+      random_state: 42
+      n_jobs: -1
+      objective: "multi:softmax"
+      eval_metric: "mlogloss"
+  
+  # LightGBM
+  lightgbm:
+    enabled: true
+    params:
+      n_estimators: 200
+      max_depth: 15
+      learning_rate: 0.1
+      num_leaves: 31
+      subsample: 0.8
+      colsample_bytree: 0.8
+      random_state: 42
+      n_jobs: -1
+      objective: "multiclass"
+      metric: "multi_logloss"
+  
+  # Deep Neural Network
+  neural_network:
+    enabled: true
+    architecture:
+      input_dim: "auto"
+      hidden_layers: [256, 128, 64, 32]
+      dropout_rate: 0.3
+      activation: "relu"
+      output_activation: "softmax"
+      batch_normalization: true
+    
+    training:
+      epochs: 50
+      batch_size: 256
+      learning_rate: 0.001
+      optimizer: "adam"
+      loss: "sparse_categorical_crossentropy"
+      metrics: ["accuracy"]
+      early_stopping:
+        enabled: true
+        patience: 10
+        monitor: "val_loss"
+      reduce_lr:
+        enabled: true
+        patience: 5
+        factor: 0.5
+        min_lr: 0.00001
+  
+  # LSTM for sequential detection
+  lstm:
+    enabled: false
+    architecture:
+      sequence_length: 10
+      lstm_units: [128, 64]
+      dropout_rate: 0.3
+      dense_layers: [32]
+    training:
+      epochs: 30
+      batch_size: 128
+      learning_rate: 0.001
+  
+  # Ensemble Model
+  ensemble:
+    enabled: true
+    method: "voting"  # Options: voting, stacking
+    voting_type: "soft"  # Options: hard, soft
+    models_to_ensemble: ["random_forest", "xgboost", "lightgbm"]
+
+# Training Configuration
+training:
+  cross_validation:
+    enabled: true
+    n_splits: 5
+    shuffle: true
+  
+  hyperparameter_tuning:
+    enabled: false
+    method: "random_search"  # Options: grid_search, random_search, bayesian
+    n_iter: 50
+    cv: 3
+  
+  save_models: true
+  model_save_path: "data/models"
+
+# Evaluation Metrics
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "roc_auc"
+    - "confusion_matrix"
+    - "classification_report"
+  
+  # Performance thresholds
+  thresholds:
+    min_accuracy: 0.95
+    min_precision: 0.93
+    min_recall: 0.92
+    min_f1_score: 0.93
+
+# Real-time Detection
+realtime:
+  enabled: true
+  buffer_size: 1000
+  prediction_threshold: 0.7
+  alert_threshold: 0.9
+  
+  # Traffic capture
+  capture:
+    interface: "eth0"
+    packet_count: 100
+    timeout: 10
+  
+  # Alert configuration
+  alerts:
+    enable_logging: true
+    enable_email: false
+    enable_webhook: false
+    log_path: "logs/alerts.log"
+
+# Visualization
+visualization:
+  dashboard:
+    enabled: true
+    update_interval: 5  # seconds
+    port: 8050
+  
+  plots:
+    confusion_matrix: true
+    roc_curve: true
+    feature_importance: true
+    learning_curves: true
+    attack_distribution: true
+    time_series: true
+
+# Logging
+logging:
+  level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/system.log"
+  console: true
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+
+# System Resources
+resources:
+  max_workers: 4
+  memory_limit: "8GB"
+  gpu_enabled: false
+  gpu_device: 0
